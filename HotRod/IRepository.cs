@@ -1,15 +1,10 @@
 using System;
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 namespace HotRod
 {
-    public interface IRepository<TIndex, TData>
-        where TIndex : struct
+    public interface IRepository<TIndex, TData> : IReadOnlyDictionary<TIndex, TData>
     {
-        TData this[TIndex index] { get; }
-
-        ReadOnlyDictionary<TIndex, TData> AllItems { get; }
-
         void StartWork(Action<IUnitOfWork<TIndex, TData>> workToDo);
     }
 }

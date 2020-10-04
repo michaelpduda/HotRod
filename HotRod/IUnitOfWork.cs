@@ -1,12 +1,11 @@
+using System.Collections.Generic;
+
 namespace HotRod
 {
-    public interface IUnitOfWork<TIndex, TData>
-        where TIndex : struct
+    public interface IUnitOfWork<TIndex, TData> : IDictionary<TIndex, TData>
     {
-        TData this[TIndex index] { get; set; }
-
         TIndex Add(TData newItem);
-        void Delete(TIndex index);
-        void SaveState();
+        void Commit();
+        void Rollback();
     }
 }

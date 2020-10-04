@@ -1,13 +1,14 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using Newtonsoft.Json;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace HotRod
 {
     public class JsonFileRepository<TIndex, TData> : IRepository<TIndex, TData>
-        where TIndex : struct
     {
         private string _fileLocation;
         private Func<TIndex> _indexCreator;
@@ -18,75 +19,47 @@ namespace HotRod
             _fileLocation = fileLocation;
         }
 
-        public TData this[TIndex index]
-        {
-            get { return ReadFile()[index]; }
-        }
+        public TData this[TIndex index] => ReadStrings()[index.ToJson()].FromJson<TData>();
 
-        public ReadOnlyDictionary<TIndex, TData> AllItems
-        {
-            get { return new ReadOnlyDictionary<TIndex, TData>(ReadFile()); }
-        }
+        public int Count => ReadStrings().Count;
+        public IEnumerable<TIndex> Keys => ReadDictionary().Keys;
+        public IEnumerable<TData> Values => ReadDictionary().Values;
+
+        public bool ContainsKey(TIndex key) => ReadStrings().ContainsKey(key.ToJson());
+
+        public IEnumerator<KeyValuePair<TIndex, TData>> GetEnumerator() => ReadDictionary().GetEnumerator();
 
         public void StartWork(Action<IUnitOfWork<TIndex, TData>> workToDo)
         {
             lock (_fileLocation)
             {
-                workToDo(new MemoryUnitOfWork(
-                    ReadFile(),
+                workToDo(new DictionaryUnitOfWork<TIndex, TData>(
+                    ReadStrings,
                     _indexCreator,
                     d => File.WriteAllText(_fileLocation, JsonConvert.SerializeObject(d, Formatting.Indented))));
             }
         }
 
-        private IDictionary<TIndex, TData> ReadFile()
-            => File.Exists(_fileLocation)
-                ? JsonConvert.DeserializeObject<IDictionary<TIndex, TData>>(File.ReadAllText(_fileLocation))
-                : new Dictionary<TIndex, TData>();
-
-        private class MemoryUnitOfWork : IUnitOfWork<TIndex, TData>
+        public bool TryGetValue(TIndex key, [MaybeNullWhen(false)] out TData value)
         {
-            private IDictionary<TIndex, TData> _currentItems;
-            private Func<TIndex> _indexCreator;
-            private Action<IDictionary<TIndex, TData>> _saveCallback;
-
-            internal MemoryUnitOfWork(
-                IDictionary<TIndex, TData> currentItems,
-                Func<TIndex> indexCreator,
-                Action<IDictionary<TIndex, TData>> saveCallback)
+            var strings = ReadStrings();
+            if (strings.TryGetValue(key.ToJson(), out string json))
             {
-                _currentItems = currentItems;
-                _indexCreator = indexCreator;
-                _saveCallback = saveCallback;
+                value = json.FromJson<TData>();
+                return true;
             }
-
-            public TData this[TIndex index]
-            {
-                get { return _currentItems[index]; }
-                set
-                {
-                    if (!_currentItems.ContainsKey(index))
-                        throw new ArgumentException($"The item with index {index.ToString()} does not exist within the repository.");
-                    _currentItems[index] = value;
-                }
-            }
-
-            public TIndex Add(TData newItem)
-            {
-                var index = _indexCreator();
-                _currentItems[index] = newItem;
-                return index;
-            }
-
-            public void Delete(TIndex index)
-            {
-                if (!_currentItems.ContainsKey(index))
-                    throw new ArgumentException($"The item with index {index.ToString()} does not exist within the repository.");
-                _currentItems.Remove(index);
-            }
-
-            public void SaveState()
-                => _saveCallback(_currentItems);
+            value = default;
+            return false;
         }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        private IDictionary<TIndex, TData> ReadDictionary() =>
+            ReadStrings().ToDictionary(kv => kv.Key.FromJson<TIndex>(), kv => kv.Value.FromJson<TData>());
+
+        private IDictionary<string, string> ReadStrings() =>
+            File.Exists(_fileLocation)
+                ? File.ReadAllText(_fileLocation).FromJson<IDictionary<string, string>>()
+                : new Dictionary<string, string>();
     }
 }
