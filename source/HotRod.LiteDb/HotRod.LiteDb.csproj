@@ -9,7 +9,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/michaelpduda/HotRod</PackageProjectUrl>
-    <Description>HotRod is a simple repository pattern .NET library with behavior similar to a Read-Only Dictionary (hence: Rod).</Description>
+    <Description>A LiteDb implementation of the HotRod repository library.</Description>
     <Authors>Michael P. Duda</Authors>
     <RepositoryUrl>https://github.com/michaelpduda/HotRod.git</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
@@ -19,8 +19,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LiteDB" Version="5.0.5" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <Compile Include="..\HotRod\Extensions.cs" Link="Extensions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HotRod\HotRod.csproj" />
   </ItemGroup>
 
 </Project>
