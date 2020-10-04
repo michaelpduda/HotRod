@@ -8,7 +8,6 @@ namespace HotRod
 {
     public class MemoryRepository<TIndex, TData> : IRepository<TIndex, TData>
         where TIndex : struct
-        where TData : struct
     {
         private Func<TIndex> _indexCreator;
         private IDictionary<TIndex, string> _savedItems = new Dictionary<TIndex, string>();

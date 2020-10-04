@@ -8,7 +8,6 @@ namespace HotRod
 {
     public class JsonFileRepository<TIndex, TData> : IRepository<TIndex, TData>
         where TIndex : struct
-        where TData : struct
     {
         private string _fileLocation;
         private Func<TIndex> _indexCreator;

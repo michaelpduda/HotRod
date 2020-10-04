@@ -5,7 +5,6 @@ namespace HotRod
 {
     public interface IRepository<TIndex, TData>
         where TIndex : struct
-        where TData : struct
     {
         TData this[TIndex index] { get; }
 

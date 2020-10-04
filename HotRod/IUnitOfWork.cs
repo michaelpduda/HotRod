@@ -2,7 +2,6 @@ namespace HotRod
 {
     public interface IUnitOfWork<TIndex, TData>
         where TIndex : struct
-        where TData : struct
     {
         TData this[TIndex index] { get; set; }
 
